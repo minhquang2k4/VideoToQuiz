@@ -6,12 +6,14 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js"
+    "start": "nodemon app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.0",
     "express": "^4.21.2",
+    "nodemon": "^3.1.9",
     "youtube-transcript": "^1.2.1"
   }
 }
