@@ -1,4 +1,4 @@
-import express, { json } from 'express';
+import express from 'express';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -14,10 +14,10 @@ app.get('/', (req, res) => {
 });
 
 app.post('/transcript', async (req, res) => {
-  const { videoId } = req.body;
+  const { videoUrl } = req.body;
 
   try {
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+    const transcript = await YoutubeTranscript.fetchTranscript(videoUrl);
     const text = transcript.map(t => t.text).join(' ');
 
     const summaryPrompt = `Tóm tắt nội dung chính của văn bản sau: ${text}`;
@@ -26,12 +26,12 @@ app.post('/transcript', async (req, res) => {
 
     const template = `
     {
-      "question": "nội dung câu hỏi",
-      "answerA": "nội dung đáp án A",
-      "answerB": "nội dung đáp án B",
-      "answerC": "nội dung đáp án C",
-      "answerD": "nội dung đáp án D",
-      "correctAnswer": "answerB"
+      "Question": "nội dung câu hỏi",
+      "AnswerA": "nội dung đáp án A",
+      "AnswerB": "nội dung đáp án B",
+      "AnswerC": "nội dung đáp án C",
+      "AnswerD": "nội dung đáp án D",
+      "CorrectAnswer": "answerB"
     }`;
     const quizPrompt = `Chỉ xuất dữ liệu định dạng theo kiểu Json theo mẫu chính xác sau ${template}. Tạo 5 câu hỏi trắc nghiệm về nội dung ${text}`;
     const quizResult = await model.generateContent(quizPrompt);
@@ -44,7 +44,7 @@ app.post('/transcript', async (req, res) => {
 
     const quizs = JSON.parse(quizText);
 
-    res.json({
+    res.status(200).json({
       summary: summary,
       quizs: quizs
     });
