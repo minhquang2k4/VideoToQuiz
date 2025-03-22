@@ -1,1 +1,30 @@
-node_modules
+# Build Folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Visual Studio Code
+.vscode/
+
+# OS-specific files
+Thumbs.db
+.DS_Store
+
+# Rider IDE
+.idea/
+*.sln.iml
+
+# NuGet Packages
+*.nupkg
+packages/
