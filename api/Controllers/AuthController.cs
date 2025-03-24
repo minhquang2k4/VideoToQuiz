@@ -9,7 +9,7 @@ public class AuthController : ControllerBase
 
     public AuthController()
     {
-        _databaseService = new DatabaseService("Server=localhost;Database=VideoToQuiz;User Id=sa;Password=admin;");
+        _databaseService = new DatabaseService();
     }
 
     [HttpPost("login")]
@@ -17,14 +17,17 @@ public class AuthController : ControllerBase
     {
         using (var connection = _databaseService.GetConnection())
         {
-            var command = new SqlCommand("SELECT COUNT(*) FROM Users WHERE Email = @Email AND Password = @Password", connection);
+            var command = new SqlCommand("SELECT * FROM Users WHERE Email = @Email", connection);
             command.Parameters.AddWithValue("@Email", request.Email);
-            command.Parameters.AddWithValue("@Password", request.Password);
 
-            var userExists = (int)command.ExecuteScalar() > 0;
-            if (userExists)
+            var reader = command.ExecuteReader();
+            if (reader.Read())
             {
-                return Ok(new { Message = "Login successful", Token = "dummy-jwt-token" });
+                var passwordHash = reader.GetString(3);
+                if (BCrypt.Net.BCrypt.Verify(request.Password, passwordHash))
+                {
+                    return Ok(new { Message = "Login successful" });
+                }
             }
         }
         return Unauthorized(new { Message = "Invalid credentials" });
@@ -38,14 +41,18 @@ public class AuthController : ControllerBase
             return BadRequest(new { Message = "Email and password are required" });
         }
 
+        // hash password
+        request.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
         using (var connection = _databaseService.GetConnection())
         {
-            var command = new SqlCommand("INSERT INTO Users (Email, Password, FullName) VALUES (@Email, @Password, @FullName)", connection);
+            var command = new SqlCommand("INSERT INTO Users (Email, PasswordHash, FullName) VALUES (@Email, @Password, @FullName)", connection);
             command.Parameters.AddWithValue("@Email", request.Email);
             command.Parameters.AddWithValue("@Password", request.Password);
             command.Parameters.AddWithValue("@FullName", request.FullName);
 
             command.ExecuteNonQuery();
+
         }
         return Ok(new { Message = "Registration successful" });
     }
@@ -63,3 +70,4 @@ public class RegisterRequest
     public string Password { get; set; }
     public string FullName { get; set; }
 }
+ 

@@ -52,7 +52,7 @@ export default function RegisterPage() {
           </div>
           <div className="text-center text-sm">
             <Link
-              href="/"
+              href="/public"
               className="text-muted-foreground underline underline-offset-4 hover:text-muted-foreground/90"
             >
               Quay lại trang chủ
