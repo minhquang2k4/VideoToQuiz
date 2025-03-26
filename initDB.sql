@@ -15,6 +15,7 @@ CREATE TABLE Users (
 GO
 
 SELECT * FROM Users;
+DROP TABLE Users;
 
 
 

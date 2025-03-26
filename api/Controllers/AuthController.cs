@@ -24,9 +24,11 @@ public class AuthController : ControllerBase
             if (reader.Read())
             {
                 var passwordHash = reader.GetString(3);
+                
                 if (BCrypt.Net.BCrypt.Verify(request.Password, passwordHash))
                 {
-                    return Ok(new { Message = "Login successful" });
+                    var token = JwtHelper.GenerateToken(request.Email);
+                    return Ok(new { Message = "Login successful", Token = token });
                 }
             }
         }
