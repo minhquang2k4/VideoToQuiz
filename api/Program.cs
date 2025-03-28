@@ -12,7 +12,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // Thay bằng URL của frontend
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -34,6 +34,6 @@ app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthorization();
 
-app.MapControllers(); // Ensure controllers are mapped
+app.MapControllers();
 
 app.Run();

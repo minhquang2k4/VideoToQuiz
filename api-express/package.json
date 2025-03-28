@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
     "nodemon": "^3.1.9",
     "youtube-transcript": "^1.2.1"

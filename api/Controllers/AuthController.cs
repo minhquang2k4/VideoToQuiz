@@ -9,7 +9,7 @@ public class AuthController : ControllerBase
 
     public AuthController()
     {
-        _databaseService = new DatabaseService();
+        _databaseService = DatabaseService.Instance;
     }
 
     [HttpPost("login")]
@@ -17,6 +17,7 @@ public class AuthController : ControllerBase
     {
         using (var connection = _databaseService.GetConnection())
         {
+            connection.Open();
             var command = new SqlCommand("SELECT * FROM Users WHERE Email = @Email", connection);
             command.Parameters.AddWithValue("@Email", request.Email);
 
@@ -24,10 +25,10 @@ public class AuthController : ControllerBase
             if (reader.Read())
             {
                 var passwordHash = reader.GetString(3);
-                
+
                 if (BCrypt.Net.BCrypt.Verify(request.Password, passwordHash))
                 {
-                    var token = JwtHelper.GenerateToken(request.Email);
+                    var token = JwtHelper.GenerateToken(reader.GetInt32(0));
                     return Ok(new { Message = "Login successful", Token = token });
                 }
             }
@@ -48,6 +49,7 @@ public class AuthController : ControllerBase
 
         using (var connection = _databaseService.GetConnection())
         {
+            connection.Open();
             var command = new SqlCommand("INSERT INTO Users (Email, PasswordHash, FullName) VALUES (@Email, @Password, @FullName)", connection);
             command.Parameters.AddWithValue("@Email", request.Email);
             command.Parameters.AddWithValue("@Password", request.Password);
@@ -72,4 +74,3 @@ public class RegisterRequest
     public string Password { get; set; }
     public string FullName { get; set; }
 }
- 

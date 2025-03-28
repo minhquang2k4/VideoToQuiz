@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -23,47 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PlusCircle } from "lucide-react";
-
-// Dữ liệu mẫu cho danh sách video
-const sampleVideos = [
-  {
-    id: "1",
-    title: "Giới thiệu về Next.js 13",
-    videoUrl: "https://www.youtube.com/watch?v=_w0Ikk4JY7U",
-    thumbnailUrl: "/placeholder.svg",
-    description: "Tìm hiểu về Next.js 13 và các tính năng mới",
-    createdAt: "2024-03-15",
-    questionsCount: 5,
-  },
-  {
-    id: "2",
-    title: "Học React Hooks cơ bản",
-    videoUrl: "https://www.youtube.com/watch?v=dpw9EHDh2bM",
-    thumbnailUrl: "/placeholder.svg",
-    description: "Hướng dẫn sử dụng React Hooks từ cơ bản đến nâng cao",
-    createdAt: "2024-03-10",
-    questionsCount: 8,
-  },
-  {
-    id: "3",
-    title: "Tailwind CSS Tutorial",
-    videoUrl: "https://www.youtube.com/watch?v=mr15Xzb1Ook",
-    thumbnailUrl: "/placeholder.svg",
-    description: "Học cách sử dụng Tailwind CSS để tạo giao diện đẹp",
-    createdAt: "2024-03-05",
-    questionsCount: 6,
-  },
-  {
-    id: "4",
-    title: "TypeScript cho người mới bắt đầu",
-    videoUrl: "https://www.youtube.com/watch?v=BwuLxPH8IDs",
-    thumbnailUrl: "/placeholder.svg",
-    description: "Hướng dẫn TypeScript từ cơ bản đến nâng cao",
-    createdAt: "2024-02-28",
-    questionsCount: 10,
-  },
-];
+import { PlusCircle, Search } from "lucide-react";
 
 // Hàm để lấy ID video từ URL YouTube
 const getYouTubeVideoId = (url: string) => {
@@ -72,143 +32,235 @@ const getYouTubeVideoId = (url: string) => {
   return match && match[2].length === 11 ? match[2] : null;
 };
 
+// Hàm để định dạng ngày tháng
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+};
+
 export default function VideosPage() {
-  const [videos, setVideos] = useState(sampleVideos);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const [videos, setVideos] = useState([]); // Dữ liệu video từ API
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true); // Trạng thái loading
+  const [error, setError] = useState(""); // Trạng thái lỗi
 
-  const handleAddVideo = () => {
+  // Gọi API để lấy danh sách video
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${apiUrl}/Video`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setVideos(response.data);
+      } catch (err) {
+        console.error("Error fetching videos:", err);
+        setError("Không thể tải danh sách video. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
+
+  const handleAddVideo = async () => {
     if (newVideoTitle && newVideoUrl) {
       const videoId = getYouTubeVideoId(newVideoUrl);
       if (videoId) {
-        const newVideo = {
-          id: (videos.length + 1).toString(),
-          title: newVideoTitle,
-          videoUrl: newVideoUrl,
-          thumbnailUrl: `/placeholder.svg`,
-          description: "Mô tả video sẽ được hiển thị ở đây.",
-          createdAt: new Date().toISOString().split("T")[0],
-          questionsCount: 5,
-        };
+        try {
+          const newVideo = {
+            title: newVideoTitle,
+            url: newVideoUrl,
+          };
 
-        setVideos([newVideo, ...videos]);
-        setNewVideoTitle("");
-        setNewVideoUrl("");
-        setIsDialogOpen(false);
+          // Gửi request thêm video
+          const response = await axios.post(`${apiUrl}/Video`, newVideo, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`, // Gửi token nếu cần
+            },
+          });
+
+          // Lấy videoID từ phản hồi
+          const { videoID } = response.data;
+
+          // Thêm video mới vào danh sách
+          const addedVideo = {
+            videoID, // ID của video vừa thêm
+            title: newVideoTitle,
+            url: newVideoUrl,
+            uploadDate: new Date().toISOString(), // Tạo ngày hiện tại
+          };
+
+          setVideos([addedVideo, ...videos]); // Cập nhật danh sách video
+          setNewVideoTitle(""); // Reset tiêu đề video
+          setNewVideoUrl(""); // Reset URL video
+          setIsDialogOpen(false); // Đóng dialog thêm video
+        } catch (err) {
+          console.error("Error adding video:", err);
+          setError("Không thể thêm video. Vui lòng thử lại sau.");
+        }
+      } else {
+        setError("URL không hợp lệ. Vui lòng nhập URL YouTube hợp lệ.");
       }
+    } else {
+      setError("Vui lòng nhập đầy đủ tiêu đề và URL video.");
     }
   };
 
+  const filteredVideos = videos.filter((video: any) =>
+    video.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold">Danh sách video của bạn</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
+        <div className="flex w-full md:w-auto gap-2">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Tìm kiếm video..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Thêm video
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Thêm video mới</DialogTitle>
+                <DialogDescription>
+                  Nhập thông tin video YouTube bạn muốn thêm vào danh sách
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Tiêu đề video</Label>
+                  <Input
+                    id="title"
+                    value={newVideoTitle}
+                    onChange={(e) => setNewVideoTitle(e.target.value)}
+                    placeholder="Nhập tiêu đề video"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="url">Đường dẫn YouTube</Label>
+                  <Input
+                    id="url"
+                    value={newVideoUrl}
+                    onChange={(e) => setNewVideoUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={handleAddVideo}
+                  disabled={!newVideoTitle || !newVideoUrl}
+                >
+                  Thêm video
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12">Đang tải danh sách video...</div>
+      ) : error ? (
+        <div className="text-center py-12 text-red-500">{error}</div>
+      ) : filteredVideos.length === 0 ? (
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold mb-2">Không tìm thấy video</h2>
+          <p className="text-muted-foreground mb-4">
+            {searchQuery
+              ? `Không tìm thấy video nào phù hợp với từ khóa "${searchQuery}"`
+              : "Bạn chưa thêm video nào vào danh sách. Hãy thêm video đầu tiên của bạn!"}
+          </p>
+          {!searchQuery && (
+            <Button onClick={() => setIsDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Thêm video mới
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Thêm video mới</DialogTitle>
-              <DialogDescription>
-                Nhập thông tin video YouTube bạn muốn thêm vào danh sách
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Tiêu đề video</Label>
-                <Input
-                  id="title"
-                  value={newVideoTitle}
-                  onChange={(e) => setNewVideoTitle(e.target.value)}
-                  placeholder="Nhập tiêu đề video"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="url">Đường dẫn YouTube</Label>
-                <Input
-                  id="url"
-                  value={newVideoUrl}
-                  onChange={(e) => setNewVideoUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={handleAddVideo}
-                disabled={!newVideoTitle || !newVideoUrl}
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredVideos.map((video: any) => {
+            const videoId = getYouTubeVideoId(video.url);
+            return (
+              <Link
+                href={`/videos/${video.videoID}`}
+                key={video.videoID}
+                className="block"
               >
-                Thêm video
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {videos.map((video) => (
-          <Link href={`/videos/${video.id}`} key={video.id} className="block">
-            <Card className="h-full hover:shadow-md transition-shadow">
-              <CardContent className="p-0">
-                <div className="aspect-video relative">
-                  <Image
-                    src={video.thumbnailUrl || "/placeholder.svg"}
-                    alt={video.title}
-                    fill
-                    className="object-cover rounded-t-lg"
-                  />
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
+                <Card className="h-full hover:shadow-md transition-shadow">
+                  <CardContent className="p-0">
+                    <div className="aspect-video relative">
+                      {videoId && (
+                        <Image
+                          src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                          alt={video.title}
+                          fill
+                          className="object-cover rounded-t-lg"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                          }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardHeader>
-                <CardTitle className="line-clamp-1">{video.title}</CardTitle>
-                <CardDescription className="line-clamp-2">
-                  {video.description}
-                </CardDescription>
-              </CardHeader>
-              <CardFooter className="text-sm text-muted-foreground">
-                <div className="flex justify-between w-full">
-                  <span>Ngày tạo: {video.createdAt}</span>
-                  <span>{video.questionsCount} câu hỏi</span>
-                </div>
-              </CardFooter>
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      {videos.length === 0 && (
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold mb-2">Chưa có video nào</h2>
-          <p className="text-muted-foreground mb-4">
-            Bạn chưa thêm video nào vào danh sách. Hãy thêm video đầu tiên của
-            bạn!
-          </p>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Thêm video mới
-          </Button>
+                  </CardContent>
+                  <CardHeader>
+                    <CardTitle className="line-clamp-1">
+                      {video.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardFooter className="text-sm text-muted-foreground">
+                    <div className="flex justify-between w-full">
+                      <span>Ngày tạo: {formatDate(video.uploadDate)}</span>
+                    </div>
+                  </CardFooter>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
 
