@@ -55,7 +55,6 @@ export default function LoginPage() {
 
       // Xử lý phản hồi từ server
       if (response.status === 200) {
-        alert("Đăng nhập thành công!");
         console.log("Response:", response.data);
 
         // Lưu token vào localStorage (nếu có)
@@ -128,7 +127,7 @@ export default function LoginPage() {
           </div>
           <div className="text-center text-sm">
             <Link
-              href="/public"
+              href="/"
               className="text-muted-foreground underline underline-offset-4 hover:text-muted-foreground/90"
             >
               Quay lại trang chủ

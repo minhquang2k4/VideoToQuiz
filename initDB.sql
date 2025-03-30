@@ -54,6 +54,14 @@ CREATE TABLE QuizOptions (
 );
 GO
 
+CREATE TABLE Notes (
+    NoteID INT IDENTITY(1,1) PRIMARY KEY,
+    VideoID INT NOT NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (VideoID) REFERENCES Videos(VideoID) ON DELETE CASCADE
+)
+
 DROP TABLE Users;
 DROP TABLE Videos;
 DROP TABLE Transcripts;
@@ -67,3 +75,4 @@ SELECT * FROM Videos;
 SELECT * FROM Transcripts;
 SELECT * FROM QuizQuestions;
 SELECT * FROM QuizOptions;
+SELECT * FROM Notes;

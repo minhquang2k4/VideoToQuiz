@@ -1,8 +1,39 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Trạng thái đăng nhập
+  const router = useRouter();
+
+  useEffect(() => {
+    // Kiểm tra xem token có tồn tại trong localStorage hay không
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true); // Đã đăng nhập
+    }
+  }, []);
+
+  const handleViewVideos = () => {
+    if (isLoggedIn) {
+      console.log("🚀 ~ handleViewVideos ~ isLoggedIn:", isLoggedIn)
+      router.push("/videos");
+    } else {
+      console.log("🚀 ~ handleViewVideos ~ isLoggedIn:", isLoggedIn)
+      router.push("/login");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false); 
+    // router.push("/"); 
+  }
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-12">
@@ -12,12 +43,19 @@ export default function Home() {
           video YouTube yêu thích
         </p>
         <div className="flex gap-4">
-          <Button asChild size="lg">
-            <Link href="/videos">Xem danh sách video</Link>
+          <Button asChild size="lg" onClick={handleViewVideos}>
+            <p className="cursor-pointer">Xem danh sách video</p>
           </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/login">Đăng nhập</Link>
-          </Button>
+          {!isLoggedIn && (
+            <Button asChild variant="outline" size="lg">
+              <Link href="/login">Đăng nhập</Link>
+            </Button>
+          )}
+          {isLoggedIn && (
+            <Button asChild variant="outline" size="lg" onClick={handleLogout}>
+              <p className="cursor-pointer" >Đăng xuất</p>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -184,8 +222,8 @@ export default function Home() {
           <Button asChild size="lg">
             <Link href="/register">Đăng ký miễn phí</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/videos">Xem danh sách video</Link>
+          <Button asChild variant="outline" size="lg" onClick={handleViewVideos}>
+            <p className="cursor-pointer">Xem danh sách video</p>
           </Button>
         </div>
       </div>
