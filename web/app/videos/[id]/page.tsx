@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,215 +15,103 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, ArrowLeft } from "lucide-react";
+import { InfoIcon, ArrowLeft, Loader2 } from "lucide-react";
 
-// Dữ liệu mẫu cho video chi tiết
-const videoDetails = {
-  "1": {
-    id: "1",
-    title: "Giới thiệu về Next.js 13",
-    videoId: "_w0Ikk4JY7U",
-    description:
-      "Next.js 13 giới thiệu nhiều tính năng mới và cải tiến đáng kể so với các phiên bản trước. Trong video này, chúng ta sẽ tìm hiểu về App Router, Server Components, và nhiều tính năng khác giúp cải thiện hiệu suất và trải nghiệm phát triển.",
-    questions: [
-      {
-        question: "Next.js 13 giới thiệu cấu trúc thư mục mới nào?",
-        options: ["pages/", "src/pages/", "app/", "routes/"],
-        correctAnswer: 2,
-      },
-      {
-        question: "Server Components là gì?",
-        options: [
-          "Components chỉ chạy trên server",
-          "Components có thể render trên server và không gửi JavaScript đến client",
-          "Components chỉ chạy trên client",
-          "Components chỉ dùng cho API routes",
-        ],
-        correctAnswer: 1,
-      },
-      {
-        question: "Đâu KHÔNG phải là tính năng của Next.js 13?",
-        options: [
-          "Turbopack",
-          "Server Actions",
-          "Vue.js integration",
-          "Streaming SSR",
-        ],
-        correctAnswer: 2,
-      },
-      {
-        question:
-          "File nào được sử dụng để định nghĩa một route trong App Router?",
-        options: ["index.js", "route.js", "page.js", "layout.js"],
-        correctAnswer: 2,
-      },
-      {
-        question: "Next.js 13 được phát triển bởi công ty nào?",
-        options: ["Google", "Facebook", "Vercel", "Amazon"],
-        correctAnswer: 2,
-      },
-    ],
-  },
-  "2": {
-    id: "2",
-    title: "Học React Hooks cơ bản",
-    videoId: "dpw9EHDh2bM",
-    description:
-      "React Hooks là một tính năng quan trọng được giới thiệu từ React 16.8, cho phép bạn sử dụng state và các tính năng khác của React mà không cần viết class. Video này sẽ hướng dẫn bạn cách sử dụng các hooks phổ biến như useState, useEffect, useContext và useReducer.",
-    questions: [
-      {
-        question: "React Hooks được giới thiệu từ phiên bản nào?",
-        options: ["16.0", "16.8", "17.0", "18.0"],
-        correctAnswer: 1,
-      },
-      {
-        question:
-          "Hook nào được sử dụng để quản lý state trong functional component?",
-        options: ["useEffect", "useState", "useContext", "useReducer"],
-        correctAnswer: 1,
-      },
-      {
-        question: "useEffect hook được sử dụng để làm gì?",
-        options: [
-          "Quản lý state",
-          "Xử lý side effects như data fetching, subscriptions, hoặc DOM mutations",
-          "Tạo context mới",
-          "Tối ưu hóa performance",
-        ],
-        correctAnswer: 1,
-      },
-      {
-        question: "Đâu là quy tắc quan trọng khi sử dụng Hooks?",
-        options: [
-          "Chỉ gọi Hooks từ functional components",
-          "Luôn gọi Hooks bên trong điều kiện if",
-          "Gọi Hooks bên trong loops",
-          "Gọi Hooks bên trong callbacks",
-        ],
-        correctAnswer: 0,
-      },
-      {
-        question: "Hook nào được sử dụng để truy cập context?",
-        options: ["useContext", "useState", "useReducer", "useRef"],
-        correctAnswer: 0,
-      },
-    ],
-  },
-  "3": {
-    id: "3",
-    title: "Tailwind CSS Tutorial",
-    videoId: "mr15Xzb1Ook",
-    description:
-      "Tailwind CSS là một framework CSS tiện ích (utility-first) giúp bạn xây dựng giao diện nhanh chóng mà không cần viết CSS tùy chỉnh. Video này sẽ hướng dẫn bạn cách cài đặt và sử dụng Tailwind CSS trong dự án của mình, cùng với các kỹ thuật responsive design và dark mode.",
-    questions: [
-      {
-        question: "Tailwind CSS là loại framework CSS nào?",
-        options: [
-          "Component-based",
-          "Utility-first",
-          "Preprocessor",
-          "CSS-in-JS",
-        ],
-        correctAnswer: 1,
-      },
-      {
-        question:
-          "Để tạo responsive design trong Tailwind, bạn sử dụng prefix nào?",
-        options: [
-          "responsive:",
-          "@media",
-          "sm:, md:, lg:, xl:",
-          "mobile:, tablet:, desktop:",
-        ],
-        correctAnswer: 2,
-      },
-      {
-        question: "Cách nào để tùy chỉnh Tailwind CSS?",
-        options: [
-          "Chỉnh sửa trực tiếp file CSS của Tailwind",
-          "Sử dụng file tailwind.config.js",
-          "Không thể tùy chỉnh Tailwind",
-          "Sử dụng CSS variables",
-        ],
-        correctAnswer: 1,
-      },
-      {
-        question: "Để thêm dark mode trong Tailwind, bạn sử dụng prefix nào?",
-        options: ["night:", "darkmode:", "dark:", "@dark"],
-        correctAnswer: 2,
-      },
-      {
-        question: "JIT (Just-In-Time) mode trong Tailwind CSS có tác dụng gì?",
-        options: [
-          "Tăng tốc độ biên dịch CSS",
-          "Chỉ tạo ra CSS cho các classes bạn thực sự sử dụng",
-          "Tự động tạo ra các component",
-          "Tối ưu hóa JavaScript",
-        ],
-        correctAnswer: 1,
-      },
-    ],
-  },
-  "4": {
-    id: "4",
-    title: "TypeScript cho người mới bắt đầu",
-    videoId: "BwuLxPH8IDs",
-    description:
-      "TypeScript là một superset của JavaScript, thêm vào tính năng kiểu dữ liệu tĩnh và các tính năng khác. Video này sẽ giới thiệu TypeScript cho người mới bắt đầu, bao gồm cách cài đặt, cú pháp cơ bản, interfaces, types, generics và cách tích hợp TypeScript vào dự án JavaScript hiện có.",
-    questions: [
-      {
-        question: "TypeScript là gì?",
-        options: [
-          "Một ngôn ngữ lập trình mới hoàn toàn",
-          "Một superset của JavaScript với kiểu dữ liệu tĩnh",
-          "Một framework JavaScript",
-          "Một preprocessor CSS",
-        ],
-        correctAnswer: 1,
-      },
-      {
-        question: "Đâu là đuôi file của TypeScript?",
-        options: [".js", ".jsx", ".ts", ".tsx"],
-        correctAnswer: 2,
-      },
-      {
-        question: "Interface trong TypeScript dùng để làm gì?",
-        options: [
-          "Định nghĩa cấu trúc của đối tượng",
-          "Tạo component React",
-          "Kết nối với cơ sở dữ liệu",
-          "Tối ưu hóa code",
-        ],
-        correctAnswer: 0,
-      },
-      {
-        question: "Generics trong TypeScript có tác dụng gì?",
-        options: [
-          "Tạo ra các hàm và lớp có thể làm việc với nhiều kiểu dữ liệu",
-          "Tự động tạo code",
-          "Tối ưu hóa hiệu suất",
-          "Tạo ra các component tái sử dụng",
-        ],
-        correctAnswer: 0,
-      },
-      {
-        question: "TypeScript được phát triển bởi công ty nào?",
-        options: ["Google", "Facebook", "Microsoft", "Apple"],
-        correctAnswer: 2,
-      },
-    ],
-  },
+// Định nghĩa kiểu dữ liệu cho video
+interface Quiz {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+}
+
+interface Note {
+  noteID: number;
+  content: string;
+  createdAt: string;
+}
+interface VideoData {
+  videoID: number;
+  title: string;
+  url: string;
+  uploadDate: string;
+  summary?: string;
+  quizs?: Quiz[];
+  notes?: Note[];
+}
+
+// Hàm để lấy ID video từ URL YouTube
+const getYouTubeVideoId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
 };
+
+// Hàm để định dạng ngày tháng
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+};
+
+// API URL - trong ứng dụng thực tế, bạn nên đặt URL này trong biến môi trường
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export default function VideoDetailPage() {
   const params = useParams();
   const videoId = params.id as string;
-  const video = videoDetails[videoId as keyof typeof videoDetails];
 
-  const [userAnswers, setUserAnswers] = useState<number[]>(
-    Array(video.questions.length).fill(-1)
-  );
+  const [video, setVideo] = useState<VideoData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [textNote, setTextNote] = useState<string>("");
+
+  // Fetch dữ liệu video từ API
+  useEffect(() => {
+    const fetchVideoData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Kiểm tra token
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Bạn chưa đăng nhập. Vui lòng đăng nhập để xem video.");
+          setLoading(false);
+          return;
+        }
+
+        // Gọi API để lấy dữ liệu video
+        const response = await axios.get(`${apiUrl}/Video/${videoId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Lưu dữ liệu video vào state
+        console.log("🚀 ~ fetchVideoData ~ response.data:", response.data);
+        setVideo(response.data);
+
+        // Reset user answers
+        if (response.data.quizs) {
+          setUserAnswers(Array(response.data.quizs.length).fill(-1));
+        }
+
+        setShowResults(false);
+      } catch (err) {
+        console.error("Error fetching video data:", err);
+        setError("Có lỗi xảy ra khi tải dữ liệu video. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideoData();
+  }, [videoId]);
 
   const handleAnswerSelect = (questionIndex: number, optionIndex: number) => {
     const newAnswers = [...userAnswers];
@@ -235,18 +124,53 @@ export default function VideoDetailPage() {
   };
 
   const calculateScore = () => {
+    if (!video || !video.quizs) return 0;
+
     return userAnswers.reduce((score, answer, index) => {
-      return answer === video.questions[index].correctAnswer
+      return answer === Number.parseInt(video.quizs[index].correctAnswer)
         ? score + 1
         : score;
     }, 0);
   };
 
   const resetQuiz = () => {
-    setUserAnswers(Array(video.questions.length).fill(-1));
-    setShowResults(false);
+    if (video && video.quizs) {
+      setUserAnswers(Array(video.quizs.length).fill(-1));
+      setShowResults(false);
+    }
   };
 
+  // Hiển thị trạng thái loading
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <h2 className="text-xl font-semibold">Đang tải video...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  // Hiển thị thông báo lỗi
+  if (error) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <div className="max-w-md mx-auto">
+          <Alert variant="destructive" className="mb-4">
+            <InfoIcon className="h-4 w-4" />
+            <AlertTitle>Lỗi</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button asChild>
+            <Link href="/videos">Quay lại danh sách video</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Hiển thị thông báo khi không tìm thấy video
   if (!video) {
     return (
       <div className="container mx-auto py-8 px-4 text-center">
@@ -260,6 +184,45 @@ export default function VideoDetailPage() {
       </div>
     );
   }
+
+  const handleAddNote = async () => {
+    if (textNote.trim() === "") {
+      alert("Vui lòng nhập ghi chú trước khi lưu.");
+      return;
+    }
+
+    // Gọi API để thêm ghi chú
+    const response = await axios.post(
+      `${apiUrl}/Video/note`,
+      {
+        videoID: video.videoID,
+        content: textNote,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      setVideo((prevVideo) => {
+        if (prevVideo) {
+          return {
+            ...prevVideo,
+            notes: [...(prevVideo.notes || []), response.data],
+          };
+        }
+        return prevVideo;
+      });
+      setTextNote(""); // Reset ghi chú sau khi lưu
+    } else {
+      alert("Có lỗi xảy ra khi lưu ghi chú. Vui lòng thử lại.");
+    }
+  };
+
+  // Lấy YouTube video ID từ URL
+  const youtubeVideoId = getYouTubeVideoId(video.url);
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -276,24 +239,33 @@ export default function VideoDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>{video.title}</CardTitle>
+            <CardDescription>
+              Ngày tạo: {formatDate(video.uploadDate)}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="aspect-video w-full">
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${video.videoId}`}
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+              {youtubeVideoId && (
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              )}
             </div>
 
-            <div className="mt-6">
-              <h3 className="text-xl font-semibold mb-2">Mô tả video</h3>
-              <p className="text-muted-foreground">{video.description}</p>
-            </div>
+            {video.summary && (
+              <div className="mt-6">
+                <h3 className="text-xl font-semibold mb-2">Tóm tắt nội dung</h3>
+                <p className="text-muted-foreground whitespace-pre-line">
+                  {video.summary}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -307,76 +279,95 @@ export default function VideoDetailPage() {
               <CardHeader>
                 <CardTitle>Trắc nghiệm kiểm tra kiến thức</CardTitle>
                 <CardDescription>
-                  Trả lời {video.questions.length} câu hỏi dưới đây để kiểm tra
-                  kiến thức của bạn
+                  {video.quizs && video.quizs.length > 0
+                    ? `Trả lời ${video.quizs.length} câu hỏi dưới đây để kiểm tra kiến thức của bạn`
+                    : "Chưa có câu hỏi nào cho video này"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  {video.questions.map((quiz, quizIndex) => (
-                    <div key={quizIndex} className="space-y-3">
-                      <h3 className="font-medium">{quiz.question}</h3>
-                      <div className="grid grid-cols-1 gap-2">
-                        {quiz.options.map((option, optionIndex) => (
-                          <Button
-                            key={optionIndex}
-                            variant={
-                              userAnswers[quizIndex] === optionIndex
-                                ? "default"
-                                : "outline"
-                            }
-                            className={`justify-start text-left ${
-                              showResults &&
-                              (optionIndex === quiz.correctAnswer
-                                ? "bg-green-100 hover:bg-green-100 border-green-500"
-                                : userAnswers[quizIndex] === optionIndex
-                                ? "bg-red-100 hover:bg-red-100 border-red-500"
-                                : "")
-                            }`}
-                            onClick={() =>
-                              !showResults &&
-                              handleAnswerSelect(quizIndex, optionIndex)
-                            }
-                            disabled={showResults}
-                          >
-                            {option}
-                          </Button>
-                        ))}
+                {video.quizs && video.quizs.length > 0 ? (
+                  <div className="space-y-6">
+                    {video.quizs.map((quiz, quizIndex) => (
+                      <div key={quizIndex} className="space-y-3">
+                        <h3 className="font-medium">{quiz.question}</h3>
+                        <div className="grid grid-cols-1 gap-2">
+                          {quiz.options.map((option, optionIndex) => (
+                            <Button
+                              key={optionIndex}
+                              variant={
+                                userAnswers[quizIndex] === optionIndex
+                                  ? "default"
+                                  : "outline"
+                              }
+                              className={`justify-start text-left ${
+                                showResults &&
+                                (optionIndex ===
+                                Number.parseInt(quiz.correctAnswer)
+                                  ? "bg-green-100 hover:bg-green-100 border-green-500"
+                                  : userAnswers[quizIndex] === optionIndex
+                                  ? "bg-red-100 hover:bg-red-100 border-red-500"
+                                  : "")
+                              }`}
+                              onClick={() =>
+                                !showResults &&
+                                handleAnswerSelect(quizIndex, optionIndex)
+                              }
+                              disabled={showResults}
+                            >
+                              {option}
+                            </Button>
+                          ))}
+                        </div>
+                        {showResults &&
+                          userAnswers[quizIndex] !==
+                            Number.parseInt(quiz.correctAnswer) && (
+                            <p className="text-sm text-red-500">
+                              Đáp án đúng:{" "}
+                              {
+                                quiz.options[
+                                  Number.parseInt(quiz.correctAnswer)
+                                ]
+                              }
+                            </p>
+                          )}
                       </div>
-                      {showResults &&
-                        userAnswers[quizIndex] !== quiz.correctAnswer && (
-                          <p className="text-sm text-red-500">
-                            Đáp án đúng: {quiz.options[quiz.correctAnswer]}
-                          </p>
-                        )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                {!showResults ? (
-                  <Button
-                    onClick={handleQuizSubmit}
-                    disabled={userAnswers.includes(-1)}
-                  >
-                    Nộp bài
-                  </Button>
+                    ))}
+                  </div>
                 ) : (
-                  <>
-                    <Alert className="w-full">
-                      <InfoIcon className="h-4 w-4" />
-                      <AlertTitle>Kết quả</AlertTitle>
-                      <AlertDescription>
-                        Bạn đã trả lời đúng {calculateScore()}/
-                        {video.questions.length} câu hỏi
-                      </AlertDescription>
-                    </Alert>
-                    <Button onClick={resetQuiz} className="ml-4">
-                      Làm lại
-                    </Button>
-                  </>
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      Chưa có câu hỏi nào cho video này. Vui lòng thêm câu hỏi
+                      để bắt đầu.
+                    </p>
+                  </div>
                 )}
-              </CardFooter>
+              </CardContent>
+              {video.quizs && video.quizs.length > 0 && (
+                <CardFooter className="flex justify-between">
+                  {!showResults ? (
+                    <Button
+                      onClick={handleQuizSubmit}
+                      disabled={userAnswers.includes(-1)}
+                    >
+                      Nộp bài
+                    </Button>
+                  ) : (
+                    <>
+                      <Alert className="w-full">
+                        <InfoIcon className="h-4 w-4" />
+                        <AlertTitle>Kết quả</AlertTitle>
+                        <AlertDescription>
+                          Bạn đã trả lời đúng {calculateScore()}/
+                          {video.quizs.length} câu hỏi
+                        </AlertDescription>
+                      </Alert>
+                      <Button onClick={resetQuiz} className="ml-4">
+                        Làm lại
+                      </Button>
+                    </>
+                  )}
+                </CardFooter>
+              )}
             </Card>
           </TabsContent>
           <TabsContent value="notes">
@@ -388,13 +379,28 @@ export default function VideoDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {video.notes && video.notes.length > 0 && (
+                  <div className="space-y-4">
+                    {video.notes.map((note) => (
+                      <div key={note.noteID} className="p-4 border rounded-md">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Ngày tạo: {formatDate(note.createdAt)}
+                        </p>
+                        <p className="whitespace-pre-line">{note.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <textarea
                   className="w-full min-h-[200px] p-4 border rounded-md"
                   placeholder="Nhập ghi chú của bạn ở đây..."
+                  value={textNote}
+                  onChange={(e) => setTextNote(e.target.value)}
                 />
               </CardContent>
               <CardFooter>
-                <Button>Lưu ghi chú</Button>
+                <Button onClick={handleAddNote}>Lưu ghi chú</Button>
               </CardFooter>
             </Card>
           </TabsContent>

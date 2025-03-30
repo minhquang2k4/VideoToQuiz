@@ -1,17 +1,20 @@
 import express from 'express';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import cors from 'cors';
 
 const app = express();
 const genAI = new GoogleGenerativeAI('AIzaSyB3vuKdE8o5acHk5RXXNLCs4FvwGGcBZJ0');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-// Middleware to parse JSON bodies
-app.use(express.json());
 
+app.use(express.json());
+ 
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
+
+app.use(cors());
 
 app.post('/transcript', async (req, res) => {
   const { videoUrl } = req.body;
@@ -26,12 +29,9 @@ app.post('/transcript', async (req, res) => {
 
     const template = `
     {
-      "Question": "nội dung câu hỏi",
-      "AnswerA": "nội dung đáp án A",
-      "AnswerB": "nội dung đáp án B",
-      "AnswerC": "nội dung đáp án C",
-      "AnswerD": "nội dung đáp án D",
-      "CorrectAnswer": "answerB"
+      "question": "nội dung câu hỏi",
+      "options": ["nội dung đáp án A", "nội dung đáp án B", "nội dung đáp án C", "nội dung đáp án D"],
+      "correctAnswer": "0"
     }`;
     const quizPrompt = `Chỉ xuất dữ liệu định dạng theo kiểu Json theo mẫu chính xác sau ${template}. Tạo 5 câu hỏi trắc nghiệm về nội dung ${text}`;
     const quizResult = await model.generateContent(quizPrompt);
@@ -54,6 +54,6 @@ app.post('/transcript', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('API is running at http://localhost:3000');
+app.listen(8000, () => {
+  console.log('API is running at http://localhost:8000');
 });
