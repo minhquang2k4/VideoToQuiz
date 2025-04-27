@@ -141,7 +141,9 @@ export default function VideosPage() {
   }
 
   // Lọc video theo từ khóa tìm kiếm
-  const filteredVideos = videos.filter((video) => video.title.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredVideos = videos.filter((video) => 
+    video.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Hiển thị trạng thái loading
   if (loading) {
