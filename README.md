@@ -41,8 +41,6 @@ VideoToQuiz là một dự án cho phép người dùng tải lên video, tạo 
    ```bash
    dotnet run
    ```
-5. API sẽ chạy tại `http://localhost:5000`.
-
 ### 3. Cài đặt Express.js (Node.js Backend)
 
 1. Điều hướng đến thư mục Express.js:
@@ -61,8 +59,6 @@ VideoToQuiz là một dự án cho phép người dùng tải lên video, tạo 
    ```bash
    npm start
    ```
-5. Server sẽ chạy tại `http://localhost:8000`.
-
 ### 4. Cài đặt Next.js (Frontend)
 1. Điều hướng đến thư mục Express.js:
    ```bash
@@ -76,4 +72,3 @@ VideoToQuiz là một dự án cho phép người dùng tải lên video, tạo 
    ```bash
    npm start
    ```
-5. Server sẽ chạy tại `http://localhost:3000`
