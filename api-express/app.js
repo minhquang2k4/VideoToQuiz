@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import cors from 'cors';
 
 const app = express();
-const genAI = new GoogleGenerativeAI('AIzaSyB3vuKdE8o5acHk5RXXNLCs4FvwGGcBZJ0');
+const genAI = new GoogleGenerativeAI('('YOUR_API_KEY_HERE');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 
